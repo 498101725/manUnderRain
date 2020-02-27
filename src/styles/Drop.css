@@ -1,0 +1,6 @@
+.drop {
+  display: inline-block;
+  position: absolute;
+  background-image: linear-gradient(rgb(165, 207, 15), rgb(4, 216, 68));
+  border-radius: 50%;
+}

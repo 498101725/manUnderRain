@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title></title>
+    <meta charset="utf-8" />
+
+    <script>
+      class Component {
+        constructor(props) {
+          this.print = function(...msgs) {
+            console.log(...msgs, this);
+            console.log(this);
+          };
+          this.create(props);
+          this.render(props);
+          this.componentDidMount(props);
+          this.ratio(props);
+        }
+      }
+
+      class Drop extends Component {
+        constructor(props) {
+          super(props);
+        }
+        // create(props) {
+        //   this.print('size', props.size);
+        // }
+        create({ size }) {
+          this.print('size', size);
+        }
+        render({ margin }) {
+          console.log('margin', margin);
+        }
+        componentDidMount(props) {
+          console.log('fall', this.fall);
+        }
+        ratio({ ratio }) {
+          console.log('ratio', ratio);
+        }
+        fall() {
+          console.log('falling');
+        }
+      }
+
+      new Drop({
+        size: 10,
+        margin: 5,
+        ratio: 15
+      });
+    </script>
+  </head>
+  <body>
+    Merry Christmas ~
+  </body>
+</html>

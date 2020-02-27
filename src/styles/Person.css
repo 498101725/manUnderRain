@@ -1,0 +1,7 @@
+.person {
+  display: block;
+  background-image: linear-gradient(#dd1010, rgb(40, 162, 218));
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+}
