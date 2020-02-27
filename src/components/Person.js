@@ -1,6 +1,9 @@
 import React from 'react';
 import '../styles/Person.css';
 
+/**
+ * @class Person
+ */
 class Person extends React.Component {
   constructor(props) {
     super(props);
