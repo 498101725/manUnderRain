@@ -17,16 +17,19 @@ class App extends React.Component {
       personWidth: 40,
       personStep: 3,
       rainMargin: 5,
-      rainRadius: 5,
-      generateInterval: 800,
+      rainRadius: 10,
+      generateInterval: 1000,
       dropsJSX: []
     };
   }
 
-  // componentDidMount不是只能被调用一次吗
+  // componentDidMount只在render挂载完毕后被调用一次，不管function body里面有什么；
   componentDidMount = () => {
+    //debugger;
     this.launchRainingThread();
+    //debugger;
     this.launchDropThread();
+    // debugger;
     this.startWalking();
   };
   startWalking = () => {
@@ -53,13 +56,14 @@ class App extends React.Component {
     const dropLine = [];
     this.drops.push(dropLine);
     for (let i = 0; i < dropNumPerLine; i++) {
+      // debugger;
       dropJSX.push(
         <Drop
           index={i * 2}
           key={i}
           created={moment}
-          top={top}
-          radius={this.state.rainRadius}
+          top={Math.random(top) * 5500}
+          radius={parseInt(Math.random() * this.state.rainRadius + 3)}
           margin={this.state.rainMargin}
           ready={drop => {
             dropLine.push(drop);
@@ -78,6 +82,7 @@ class App extends React.Component {
   launchRainingThread = () => {
     const createDropLine = () => {
       if (this.isRaining) {
+        //debugger;
         this.drawDropline(0, performance.now());
       }
       window.setTimeout(createDropLine, this.state.generateInterval);
@@ -91,6 +96,7 @@ class App extends React.Component {
         return;
       }
       if (!this.isRaining) {
+        //
         window.requestAnimationFrame(toDrop);
         return;
       }
@@ -116,6 +122,7 @@ class App extends React.Component {
       });
       // this.drops重新等一下
       this.drops = this.drops.filter((_, index) => {
+        // debugger;
         return this.state.dropsJSX[index].length;
       });
       this.setState({
