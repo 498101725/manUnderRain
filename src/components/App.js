@@ -1,170 +1,105 @@
 import React from 'react';
 import '../styles/App.css';
-import SplitPane, { Pane } from 'react-split-pane';
+import SplitPane from 'react-split-pane';
 import Person from './Person';
 import Drop from './Drop';
-import Slider, { Range } from 'rc-slider';
+import Slider from 'rc-slider';
 import 'bulma/css/bulma.min.css';
 import 'rc-slider/assets/index.css';
 
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.drops = [];
     this.state = {
-      screenSize: 880,
-      personHeight: 300,
-      personWidth: 40,
-      personStep: 3,
-      rainMargin: 5,
-      rainRadius: 10,
-      generateInterval: 1000,
-      dropsJSX: []
+      screenLength: 880,
+      personHeight: 200,
+      personWidth: 35,
+      personStep: 50,
+      rainMargin: 15,
+      rainRadius: 8,
+      generateInterval: 500,
+      dropsJSX: [],
+      top: 0,
+      destroyedDropNumber: 0
     };
   }
 
-  // componentDidMount只在render挂载完毕后被调用一次，不管function body里面有什么；
-  componentDidMount = () => {
-    //debugger;
-    this.launchRainingThread();
-    //debugger;
-    this.launchDropThread();
-    // debugger;
-    this.startWalking();
-  };
-  startWalking = () => {
-    const walking = () => {
-      if (this.personWalkedBy()) {
-        return;
-      }
-      if (this.isWalking == true) {
-        this.person.walk();
-      }
-
-      window.requestAnimationFrame(walking);
-    };
-    window.requestAnimationFrame(walking);
-  };
-
-  drawDropline = (top, moment) => {
-    const dropNumPerLine = this.dropNumEachLine(
-      this.state.screenSize,
+  drawDropline = () => {
+    const dropNumPerLine = this.getNumPerLine(
+      this.state.screenLength,
       this.state.rainMargin,
       this.state.rainRadius
     );
-    let dropJSX = [];
-    const dropLine = [];
-    this.drops.push(dropLine);
-    for (let i = 0; i < dropNumPerLine; i++) {
-      // debugger;
-      dropJSX.push(
-        <Drop
-          index={i * 2}
-          key={i}
-          created={moment}
-          top={Math.random(top) * 5500}
-          radius={parseInt(Math.random() * this.state.rainRadius + 3)}
-          margin={this.state.rainMargin}
-          ready={drop => {
-            dropLine.push(drop);
-          }}
-        />
-      );
+
+    const row = this.state.dropsJSX.push([]) - 1;
+    const moment = performance.now();
+
+    for (let col = 0; col < dropNumPerLine; col++) {
+      this.drawDrop(row, col, moment);
     }
-    this.state.dropsJSX.push(dropJSX);
+    this.setState({
+      dropsJSX: this.state.dropsJSX
+    });
   };
 
-  dropNumEachLine = (screenSize, margin, radius) => {
-    const space = screenSize / (margin * 2 + radius * 2);
-    return space;
+  changeTopValue = top => {
+    this.setState({ top: top });
   };
 
-  launchRainingThread = () => {
+  drawDrop = (row, col, moment) => {
+    if (Math.random() < 0.3) {
+      return;
+    }
+
+    const dropIdentity = this.state.dropsJSX[row].length;
+
+    this.state.dropsJSX[row].push(
+      <Drop
+        getTop={this.changeTopValue}
+        key={dropIdentity}
+        index={col}
+        created={moment}
+        radius={this.state.rainRadius}
+        margin={this.state.rainMargin}
+        substance={[this.person]}
+        onDestroy={() => {
+          const dropHeight = this.state.rainRadius * 2;
+          const dropBottom = this.state.top + dropHeight;
+          if (dropBottom < window.innerHeight) {
+            this.setState({
+              destroyedDropNumber: this.state.destroyedDropNumber + 1
+            });
+          }
+          const line = this.state.dropsJSX[row];
+          const target = line.findIndex(({ key }) => {
+            return parseInt(key) === dropIdentity;
+          });
+          if (target !== -1) {
+            line.splice(target, 1);
+          }
+        }}
+      />
+    );
+  };
+
+  getNumPerLine = (screenLength, margin, radius) => {
+    const space = screenLength / (margin * 2 + radius * 2);
+    return Math.floor(space);
+  };
+
+  startRaining = () => {
     const createDropLine = () => {
-      if (this.isRaining) {
-        //debugger;
-        this.drawDropline(0, performance.now());
-      }
-      window.setTimeout(createDropLine, this.state.generateInterval);
+      this.drawDropline();
+      this.toCreateDrops = window.setTimeout(
+        createDropLine,
+        this.state.generateInterval
+      );
     };
     createDropLine();
   };
 
-  launchDropThread = () => {
-    const toDrop = () => {
-      if (this.personWalkedBy()) {
-        return;
-      }
-      if (!this.isRaining) {
-        //
-        window.requestAnimationFrame(toDrop);
-        return;
-      }
-      const now = performance.now();
-      this.drops.forEach((line, rowIndex) => {
-        line.forEach((drop, colIndex) => {
-          if (this.isDropOnPerson(drop) || this.isDropOnGround(drop)) {
-            line.splice(
-              line.findIndex(d => {
-                return d === drop;
-              }),
-              1
-            );
-            this.state.dropsJSX[rowIndex].splice(
-              this.state.dropsJSX[rowIndex].findIndex(d => {
-                return d === this.state.dropsJSX[rowIndex][colIndex];
-              }),
-              1
-            );
-          }
-          drop.fall(now);
-        });
-      });
-      // this.drops重新等一下
-      this.drops = this.drops.filter((_, index) => {
-        // debugger;
-        return this.state.dropsJSX[index].length;
-      });
-      this.setState({
-        dropsJSX: this.state.dropsJSX.filter(dropJSX => {
-          return dropJSX.length;
-        })
-      });
-      window.requestAnimationFrame(toDrop);
-    };
-    window.requestAnimationFrame(toDrop);
-  };
-  isDropOnPerson = drop => {
-    const { px1, px2, py1 } = this.person.getPosition();
-
-    const { dx1, dx2, dy1, dy2 } = drop.getPosition();
-    const heightComparison = dy1 > py1 && py1 > dy2;
-    if (
-      (dx1 < px1 && px1 < dx2 && heightComparison) ||
-      (dx1 > px1 && dx2 < px2 && heightComparison) ||
-      (dx1 < px2 && dx2 > px2 && heightComparison)
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-  isDropOnGround = drop => {
-    const { dx2 } = drop.getPosition();
-    if (dx2 >= this.availableSpace) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  personWalkedBy = () => {
-    const { px1 } = this.person.getPosition();
-    if (px1 > window.innerWidth) {
-      return true;
-    } else {
-      return false;
-    }
+  stopRaining = () => {
+    clearTimeout(this.toCreateDrops);
   };
 
   onRainSizeChange = rainRadius => {
@@ -180,24 +115,42 @@ class App extends React.Component {
     this.setState({ rainMargin: margin });
   };
 
-  onPersonWalk = ref => {
+  onPersonReady = ref => {
     this.person = ref;
   };
 
+  rainAndWalk = () => {
+    setTimeout(() => {
+      this.person.start();
+    }, 4000);
+    this.startRaining();
+  };
+  stopRainAndWalk = () => {
+    setTimeout(() => {
+      this.person.stop();
+    }, 2800);
+    this.stopRaining();
+  };
+  rainAndRun = () => {
+    setTimeout(() => {
+      this.person.running();
+    }, 4000);
+    this.startRaining();
+  };
   render() {
     return (
       <div>
         <SplitPane
           split='vertical'
           minSize={100}
-          maxSize={1000}
-          defaultSize={this.state.screenSize}
+          defaultSize={this.state.screenLength}
         >
           <div>
             <div>{this.state.dropsJSX}</div>
             <div>
               <Person
-                getPerson={this.onPersonWalk}
+                screenLength={this.state.screenLength}
+                onCreated={this.onPersonReady}
                 height={this.state.personHeight}
                 width={this.state.personWidth}
                 step={this.state.personStep}
@@ -217,8 +170,8 @@ class App extends React.Component {
             <div>
               <p>Rain Margin</p>
               <Slider
-                min={2}
-                max={8}
+                min={10}
+                max={30}
                 defaultValue={this.state.rainMargin}
                 onChange={this.onRainMarginChange}
               />
@@ -243,37 +196,28 @@ class App extends React.Component {
             </div>
             <div className='section'>
               <div className='buttons has-addons'>
-                <button className='button'>Rain</button>
                 <button
                   className='button is-info'
-                  onClick={() => (this.isRaining = true)}
+                  onClick={() => this.rainAndWalk()}
                 >
-                  Fall
+                  Start
+                </button>
+                <button
+                  className='button is-success'
+                  onClick={() => this.rainAndRun()}
+                >
+                  Running
                 </button>
                 <button
                   className='button is-danger'
-                  onClick={() => (this.isRaining = false)}
+                  onClick={() => this.stopRainAndWalk()}
                 >
                   Stop
                 </button>
-              </div>
-              <div className='buttons has-addons'>
-                <button className='button'>Person</button>
-                <button
-                  className='button is-info'
-                  onClick={() => {
-                    this.isWalking = true;
-                  }}
-                >
-                  Walk
-                </button>
-                <button
-                  className='button is-danger'
-                  onClick={() => {
-                    this.isWalking = false;
-                  }}
-                >
-                  Stop
+
+                <button className='button is-info'> Drops Gone</button>
+                <button className='button is-warning'>
+                  {this.state.destroyedDropNumber}
                 </button>
               </div>
             </div>
