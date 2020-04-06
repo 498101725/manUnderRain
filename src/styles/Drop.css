@@ -1,6 +1,8 @@
 .drop {
   display: inline-block;
   position: absolute;
-  background-image: linear-gradient(rgb(165, 207, 15), rgb(4, 216, 68));
-  border-radius: 50%;
+  z-index: 1000;
+  background-image: linear-gradient(rgb(112, 211, 241), rgb(171, 238, 238));
+  border-radius: 80% 0 55% 50% / 55% 0 80% 50%;
+  transform: rotate(320deg);
 }
