@@ -16,7 +16,7 @@
     "react-scripts": "^3.4.0",
     "react-split": "^2.0.7",
     "react-split-pane": "^0.1.89",
-    "serialize-javascript": "^3.0.0"
+    "serialize-javascript": "^3.1.0"
   },
   "resolutions": {
     "serialize-javascript": "^2.1.1"
